@@ -1,0 +1,33 @@
+name: Fetch TODO to /tmp
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # 5분마다 (UTC 기준)
+  push:                     # 레포에 커밋/푸시 발생 시에도 실행
+  workflow_dispatch:        # Actions 탭에서 수동 실행 버튼
+
+jobs:
+  fetch-and-save:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Compute ID (minute+1) and save JSON to /tmp/test.json
+        run: |
+          # 현재 분 + 1 (00~59 → 1~60)
+          MIN=$(date +%M)
+          ID=$((10#$MIN + 1))
+          URL="https://jsonplaceholder.typicode.com/todos/${ID}"
+          echo "Fetching: $URL"
+
+          # /tmp/test.json에 저장
+          curl -s "$URL" -o /tmp/test.json
+
+          echo "Saved to /tmp/test.json"
+          echo "Preview:"
+          head -c 200 /tmp/test.json || true
+
+      - name: Upload result as artifact (for submission)
+        uses: actions/upload-artifact@v4
+        with:
+          name: test.json
+          path: /tmp/test.json
